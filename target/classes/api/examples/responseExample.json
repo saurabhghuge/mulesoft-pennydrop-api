@@ -1,0 +1,12 @@
+{
+  "result":
+    {
+      "accountNumber":"50100096598214",
+      "ifsc":"HDFC0001246",
+      "accountName":"Saurabh Ghuge",
+      "bankResponse":"Transaction Successful",
+      "bankTxnStatus":true
+    },
+    "request_id":"457de9f9-5b62-471c-ae30-cb7e1b7c631e",
+    "status-code":"101"
+}

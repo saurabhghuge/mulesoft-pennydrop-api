@@ -1,0 +1,27 @@
+#%RAML 1.0
+title: PennyDropBankApi
+
+traits:   
+  api-headers-required: !include /headrs/requireHeaders.raml
+  default-error-responses: !include /errors/erros.raml
+
+
+/verifyAccountDetails:
+  post:
+    description: used to verify bank account Details form karza
+    is: [api-headers-required,default-error-responses ]
+
+    body:
+      application/json:
+          type: !include /types/requestTypes.raml
+          example: !include /examples/requestExample.json
+
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+            example: !include /examples/responseExample.json
+      
+
+        

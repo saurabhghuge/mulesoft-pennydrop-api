@@ -1,0 +1,34 @@
+{
+  "configs": [
+    "pennydropbankapi.xml",
+    "error-handlers.xml"
+  ],
+  "secureProperties": [],
+  "redeploymentEnabled": true,
+  "name": "com.mycompany:penneydropapi2:1.0.0-SNAPSHOT",
+  "minMuleVersion": "4.4.0",
+  "requiredProduct": "MULE_EE",
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedPackages": [],
+      "exportedResources": [
+        "api/errors/erros.raml",
+        "api/examples/requestExample.json",
+        "api/examples/responseExample.json",
+        "api/headrs/requireHeaders.raml",
+        "api/pennydropbankapi.raml",
+        "api/types/requestTypes.raml",
+        "application-types.xml",
+        "datawave/isAutherized.dwl",
+        "error-handlers.xml",
+        "log4j2.xml",
+        "pennydropbankapi.xml"
+      ]
+    }
+  },
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  }
+}

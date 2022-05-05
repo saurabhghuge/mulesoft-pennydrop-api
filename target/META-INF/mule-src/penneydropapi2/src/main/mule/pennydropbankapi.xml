@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <http:listener-config name="pennydropbankapi-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="pennydropbankapi-config" api="pennydropbankapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="pennydropbankapi-main">
+        <http:listener config-ref="pennydropbankapi-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <ee:transform doc:name="Transform Message" doc:id="840cd489-ecf1-465a-a5ee-841cccc5bd21" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="datawave/isAutherized.dwl" variableName="isAuthorized" />
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="50e37d0d-f813-45d8-b972-2b4e2c2febaf" >
+			<when expression="#[vars.isauthorized == true]">
+				<apikit:router config-ref="pennydropbankapi-config" />
+			</when>
+			<otherwise >
+				<raise-error doc:name="not authorised error" doc:id="72542f17-dc47-4fe6-b064-35f788db6201" type="CUSTOM:NOT_AUTHORIZED"/>
+			</otherwise>
+		</choice>
+        <error-handler ref="error-handlers">
+          
+        </error-handler>
+    </flow>
+    <flow name="post:\verifyAccountDetails:application\json:pennydropbankapi-config">
+        <logger level="INFO" doc:name="Entry Logger" doc:id="457bf0e6-e27f-4c97-a587-aa5df571982b" message="flow-name: #[flow.name], Inbound request: #[payload]"/>
+		<ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  ("consent": payload.consent) if(not (isEmpty(payload.consent))),
+  ("ifsc": payload.ifsc) if(not (isEmpty(payload.ifsc))),
+  ("accountNumber": payload.accountNumber) if(not (isEmpty(payload.accountNumber)))
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="67378a88-f7bc-4b32-8937-951a26e60cf2" url="https://api.karza.in/v2/bankacc">
+			<http:body ><![CDATA[#[output application/json
+---
+payload]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"x-karza-key" : "3d57llqq3f25FWC3wzzA",
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="responseLogger" doc:id="d847fd06-2b35-41b5-94b7-c9a7414f0875" message="#[payload]" />
+		<ee:transform doc:name="Transform Message" doc:id="db08c4bd-c1d9-49e5-84e4-58ac4849f942" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="3838eee2-2822-4dea-9477-11ce67c77abb" >
+			<when expression="#[payload.&quot;status-code&quot; == 101 or payload.&quot;status-code&quot;== '101']">
+				<ee:transform doc:name="Transform Message" doc:id="fcae32c2-666e-4e72-af3e-fd9ce8b25f16" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{	
+  ("statusCode": payload."status-code" ) if(not isEmpty(payload."status-code")),
+  ("requestId": payload."request_id" ) if(not isEmpty(payload."request_id")),
+  ("result": {
+    ("bankTxnStatus": payload.result.bankTxnStatus ) if(not isEmpty(payload.result.bankTxnStatus)),
+    ("accountNumber":  payload.result.accountNumber ) if(not isEmpty(payload.result.accountNumber)),
+    ("ifsc":  payload.result.ifsc ) if(not isEmpty(payload.result.ifsc)),
+    ("accountName":  payload.result.accountName ) if(not isEmpty(payload.result.accountName)),
+    ("bankResponse": payload.result.bankResponse ) if(not isEmpty(payload.result.bankResponse))
+  })  if(not isEmpty(payload.result))
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="61e88c0d-08e5-419a-9ce0-6f2f7852992c" type="CUSTOM:INTERNAL_SERVER_ERROR" description="#[payload.statusMessage]"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Exit Logger" doc:id="476f7028-d22b-431e-91fe-5ee85a9ff681" message="#[payload]"/>
+		<error-handler ref="error-handlers" />
+    </flow>
+	<flow name="pennydropbankapi-console" doc:id="5dbf43bd-2148-47a2-a496-b54275cbaf90" >
+		<http:listener doc:name="Listener" doc:id="04afa483-d4fc-4ef6-b7ac-aa61f64bd38a" config-ref="pennydropbankapi-httpListenerConfig" path="/console/*" >
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]" >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+				<http:headers ><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:console doc:name="APIkit Console" doc:id="6274b8d9-9b1b-4b60-8f0f-af80b0ca46c4" config-ref="pennydropbankapi-config" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fe6603fe-a54b-4469-b816-dbfaa76c82ba" type="APIKIT:NOT_FOUND" >
+				<ee:transform doc:name="Transform Message" doc:id="222f2c01-9bf1-42c8-88f3-77bf4c2ad3bf" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

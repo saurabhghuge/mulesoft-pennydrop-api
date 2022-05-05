@@ -1,0 +1,57 @@
+#%RAML 1.0 Trait
+# title: erros
+description: all type of basic errors
+
+
+responses: 
+  400:
+    description: 
+    body: 
+      application/json:
+        example: 
+          {
+            "statusCode": 400,
+            "statusType": "Bad request",
+            "statusMessage": "Something went very wrong. Please try again."
+          } 
+
+  404:
+    description: 
+    body: 
+      application/json:
+        example:
+          {
+            "statusCode": 404,
+            "statusType": "Resource does not exist",
+            "statusMessage": "The requested URI does not map to a resource.",
+
+          }
+  405:
+    description: 
+    body: 
+      application/json:
+        example:
+          {
+            "statusCode": 405,
+            "statusType": "Unsupported Method",
+            "statusMessage": "The requested URI does not exist to a resource."
+          }
+  500:
+    description: 
+    body: 
+      application/json:
+        example: 
+          {
+            "statusCode": 500,
+            "statusType": "Internal Server Error",
+            "statusMessage": "A server-side exception occurred ."
+          }
+
+          
+
+
+
+  
+
+
+          

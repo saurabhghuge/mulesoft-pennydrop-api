@@ -1,0 +1,7 @@
+http:
+ host: "localhost"
+ port: "8081"
+pennyDropVerification:
+  request:
+   url: "https://api.karza.in/v2/bankacc"
+karzakey: "3d57llqq3f25FWC3wzzA"   
